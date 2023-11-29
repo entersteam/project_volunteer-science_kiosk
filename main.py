@@ -11,6 +11,7 @@ client = MongoClient(CONNECTION_STRING,tlsCAFile=certifi.where())
 db = client["project_bongsa"]
 items_collection = db["items"]
 rent_collection = db["rent"]
+user_collection = db['user']
 
 
 # 물품 종류 -> '영문명' : '국문명' 형태로 저장  / '영문명'의 경우 db와 파일 이름 부분에서 통일 해야함.
@@ -29,13 +30,42 @@ def fix_amount(item, amount):
     {"$inc" : {"can_rent" : amount }}
     )
 
-def rent_amount(item, current_user):
-    
+def rent_amount(item, student_id):
+    user_db = user_collection.find_one({"student_id" : student_id})
+    amount = user_db[item]
     return amount
 
+def add_user(student_id):
+    user_db = user_collection.find_one({"student_id" : student_id})
+    if user_db == None:
+        user_collection.insert_one({"student_id" : student_id,
+        'motor' : 0,
+        'light_bulb' : 0,
+        'tape' : 0,
+        'wire' :0
+        }) # 수정 필요
+
+def regist_user():
+    global current_user
+    current_user = str(inputbarcode.get())
+    print("logged in", current_user)
+
+def no_item(student_id):
+    user_db = user_collection.find_one({"student_id" : student_id})
+    for item in item_category:
+        if user_db[item] != 0:
+            return True
+    return False
+    
+def on_entry_change(event):
+    content = inputbarcode.get()
+    if len(content) == 8:
+        regist_user()
+    
 class rent_frame:
     def __init__(self, item) -> None:
         #물품 개수 
+        self.item = item
         self.item_num= check_amount(item)
         
         self.image = PhotoImage(file=f"./image/items/{item}.png")
@@ -66,11 +96,15 @@ class rent_frame:
         self.label.config(text=f"대여 수량 : {self.value}")
         
     def rent(self):
+        global current_user
         messagebox.showinfo("대여확인",str(self.value)+"개 대여되었습니다.")
         self.item_num -= self.value
         self.scale.config(to = self.item_num)
         self.label_motor.config(text=self.amount_lebel())
         fix_amount(item, self.item_num)
+        add_user(current_user)
+        user_collection.update_one({'student_id': current_user }, {'$inc' : {self.item : self.value}})
+
         
     def amount_lebel(self):
         return "수량 "+str(self.item_num)
@@ -80,7 +114,7 @@ class return_frame:
         global current_user
         #물품 개수 
         self.item = item
-        self.own_num= rent_amount(item, current_user)
+        self.own_num= 0
         
         self.image = PhotoImage(file=f"./image/items/{item}.png")
         
@@ -105,6 +139,13 @@ class return_frame:
         self.back_buton = tkinter.Button(self.frame, text="돌아가기", padx=10, pady=10,command=lambda : [rent_main_frame.tkraise()])
         self.back_buton.pack(padx=10, pady=10)
         
+    def tkraise(self):
+        try:
+            self.own_num = rent_amount(self.item, current_user)
+        except:
+            self.own_num = 0
+        self.frame.tkraise()
+    
     def select(self, x):
         self.value=int(x)
         self.label.config(text=f"반납 수량 : {self.value}")
@@ -115,6 +156,10 @@ class return_frame:
         self.scale.config(to = self.own_num)
         self.num_label.config(text=self.amount_lebel())
         fix_amount(self.item, check_amount(self.item) + self.value)
+        
+        user_db = user_collection.find_one({"student_id" : current_user})
+        rent_amount = user_db[self.item]
+        user_collection.update_one({"student_id" : current_user}, {"$set" : {self.item : rent_amount - self.value}})
         
     def amount_lebel(self):
         return "수량 "+str(self.own_num)
@@ -132,33 +177,43 @@ return_main_frame.grid(row=0, column=0, sticky="nsew")
 start_frame.grid(row=0, column=0, sticky="nsew")
 
 
+login_frame = tkinter.Frame(window)
+barcode_frame = tkinter.Frame(window)
+login_frame.grid(row=0, column=0, sticky="nsew")
+barcode_frame.grid(row=0, column=0, sticky="nsew")
+
     
-name1 = PhotoImage(file=f"name.png")
-namebtn1 = tkinter.Button(framelog, text="제목", padx=1, pady=1,command=lambda:[change(frameinsik)], image=name1)
-login = PhotoImage(file=f"login.png")
-btnToFrame1 = tkinter.Button(framelog, text="로그인", padx=1, pady=1,command=lambda:[change(frameinsik)], image=login)
+tips_image = PhotoImage(file=f"./image/tips.png")
+namebtn1 = tkinter.Button(login_frame, text="제목", padx=1, pady=1,command=lambda:[barcode_frame.tkraise()], image=tips_image)
+login = PhotoImage(file=f"./image/login.png")
+btnToFrame1 = tkinter.Button(login_frame, text="로그인", padx=1, pady=1,command=lambda:[barcode_frame.tkraise()], image=login)
 namebtn1.pack()
 btnToFrame1.pack(padx=120, pady=200)
 
 #바코드인식
-barcode = PhotoImage(file=f"barcode.png")
-barcodebtn = tkinter.Button(frameinsik, text="제목", padx=1, pady=1,command=lambda:[change(frame3)], image=barcode)
-inputbarcode = tkinter.Entry(frameinsik, width=10)
-login2 = PhotoImage(file=f"login.png")
-btnToFrame2 = tkinter.Button(frameinsik, text="로그인", padx=1, pady=1,command=barcode1, image=login2)
+barcode = PhotoImage(file=f"./image/barcode.png")
+barcodebtn = tkinter.Button(barcode_frame, text="제목", padx=1, pady=1, image=barcode)
+inputbarcode = tkinter.Entry(barcode_frame, width=10)
+inputbarcode.bind("<KeyRelease>", on_entry_change)
+login2 = PhotoImage(file=f"./image/login.png")
+btnToFrame2 = tkinter.Button(barcode_frame, text="로그인", padx=1, pady=1,command=regist_user, image=login2)
 barcodebtn.pack(padx=120, pady=200)
 inputbarcode.pack()
 btnToFrame2.pack()
 
- 
+def return_raise():
+    if no_item(current_user):
+        return_main_frame.tkraise()
+        return 1
+    messagebox.showinfo("대여중인 물품이 없습니다.")
+    return -1
 
 #시작 화면
-name = PhotoImage(file=f"./image/name.png")
-namebtn = tkinter.Button(start_frame, text="제목", padx=1, pady=1, image=name)
+namebtn = tkinter.Button(start_frame, text="제목", padx=1, pady=1, image=tips_image)
 borrow = PhotoImage(file=f"./image/borrow.png")
 btnToFrame1 = tkinter.Button(start_frame, text="대여버튼", padx=1, pady=1,command=lambda:[rent_main_frame.tkraise()], image=borrow)
 giveback = PhotoImage(file=f"./image/giveback.png")
-btnToFrame1_1 = tkinter.Button(start_frame, text="반납버튼", padx=1, pady=1,command=lambda:[return_main_frame.tkraise()], image=giveback)
+btnToFrame1_1 = tkinter.Button(start_frame, text="반납버튼", padx=1, pady=1,command=lambda:[return_raise()], image=giveback)
 namebtn.pack(padx=120, pady=200)
 btnToFrame1.pack()
 btnToFrame1_1.pack()
@@ -183,10 +238,10 @@ for i, item in enumerate(item_category):
     print(i, item)
     return_frames.append(return_frame(item))
     return_item_imgs.append(PhotoImage(file=f"./image/items/{item}.png"))
-    return_btn_Frames.append(tkinter.Button(return_main_frame, text=item, padx=10, pady=15, command= eval(f"lambda : [return_frames[{i}].frame.tkraise()]"), image=return_item_imgs[i]))
+    return_btn_Frames.append(tkinter.Button(return_main_frame, text=item, padx=10, pady=15, command= eval(f"lambda : [return_frames[{i}].tkraise()]"), image=return_item_imgs[i]))
     
     print((i//2) + 1, (i+1)%2)
     return_btn_Frames[i].grid(row = (i//2) + 1, column = (i)%2 + 1, padx=20, pady=20)
 
-start_frame.tkraise() #기본메인화면
+login_frame.tkraise() #기본메인화면
 window.mainloop()
