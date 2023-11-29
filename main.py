@@ -132,6 +132,24 @@ return_main_frame.grid(row=0, column=0, sticky="nsew")
 start_frame.grid(row=0, column=0, sticky="nsew")
 
 
+    
+name1 = PhotoImage(file=f"name.png")
+namebtn1 = tkinter.Button(framelog, text="제목", padx=1, pady=1,command=lambda:[change(frameinsik)], image=name1)
+login = PhotoImage(file=f"login.png")
+btnToFrame1 = tkinter.Button(framelog, text="로그인", padx=1, pady=1,command=lambda:[change(frameinsik)], image=login)
+namebtn1.pack()
+btnToFrame1.pack(padx=120, pady=200)
+
+#바코드인식
+barcode = PhotoImage(file=f"barcode.png")
+barcodebtn = tkinter.Button(frameinsik, text="제목", padx=1, pady=1,command=lambda:[change(frame3)], image=barcode)
+inputbarcode = tkinter.Entry(frameinsik, width=10)
+login2 = PhotoImage(file=f"login.png")
+btnToFrame2 = tkinter.Button(frameinsik, text="로그인", padx=1, pady=1,command=barcode1, image=login2)
+barcodebtn.pack(padx=120, pady=200)
+inputbarcode.pack()
+btnToFrame2.pack()
+
  
 
 #시작 화면
