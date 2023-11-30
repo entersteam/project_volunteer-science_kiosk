@@ -18,9 +18,8 @@ user_collection = db['user']
 item_category = {'motor' : '모터', 'light_bulb' : '전구','tape' : '테이프','wire' : '실'}
 
 def check_amount(item):
-    item_db = items_collection.find({"item_name" : item})
-    for item_db in item_db:
-        amount = item_db['can_rent']
+    item_db = items_collection.find_one({"item_name" : item})
+    amount = item_db['can_rent']
     return amount
 
 def fix_amount(item, amount):
@@ -259,7 +258,7 @@ window.bind("<F11>", toggle_fullscreen)
 window.bind("<Escape>", lambda event: window.attributes('-fullscreen', False))  # Escape 키를 누를 때 전체 화면 해제
 
 # 초기에는 전체 화면이 아닌 상태로 시작
-window.attributes('-fullscreen', True)
+window.attributes('-fullscreen', False)
 
 # 윈도우 실행
 window.mainloop()
