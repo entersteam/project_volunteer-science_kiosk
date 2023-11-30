@@ -89,7 +89,7 @@ class rent_frame:
         self.rent_button = tkinter.Button(self.frame, text="대여하기", padx=10, pady=10,command=self.rent)
         self.rent_button.pack()
         
-        self.back_buton = tkinter.Button(self.frame, text="돌아가기", padx=10, pady=10,command=lambda : [rent_main_frame.tkraise()])
+        self.back_buton = tkinter.Button(self.frame, text="돌아가기", padx=10, pady=10,command=lambda : [start_frame.tkraise()])
         self.back_buton.pack(padx=10, pady=10)
         
     def select(self, x):
@@ -125,7 +125,7 @@ class return_frame:
         self.item_IMAGE = tkinter.Button(self.frame, text=item_category[item], padx=10, pady=10, image=self.image)
         self.item_IMAGE.pack(padx=0, pady=50)
         
-        self.num_label = Label(self.frame, text=self.amount_lebel(), font=(26))
+        self.num_label = Label(self.frame, text=self.amount_label(), font=(26))
         self.num_label.pack()
         self.var=tkinter.IntVar()
         self.scale=tkinter.Scale(self.frame, variable=self.var, command=self.select, orient="horizontal", showvalue=False, to=self.own_num, length=300)
@@ -137,7 +137,7 @@ class return_frame:
         self.rent_button = tkinter.Button(self.frame, text="반납하기", padx=10, pady=10,command=self.return_item)
         self.rent_button.pack()
         
-        self.back_buton = tkinter.Button(self.frame, text="돌아가기", padx=10, pady=10,command=lambda : [rent_main_frame.tkraise()])
+        self.back_buton = tkinter.Button(self.frame, text="돌아가기", padx=10, pady=10,command=lambda : [start_frame.tkraise()])
         self.back_buton.pack(padx=10, pady=10)
         
     def tkraise(self):
@@ -145,7 +145,7 @@ class return_frame:
             self.own_num = rent_amount(self.item, current_user)
         except:
             self.own_num = 0
-        self.scale.congif(t0 = self.won_num)
+        self.scale.config(to = self.own_num)
         self.num_label.config(to = self.amount_label())
         self.frame.tkraise()
     
@@ -157,14 +157,14 @@ class return_frame:
         messagebox.showinfo(self.item,str(self.value)+"개가 반납되었습니다.")
         self.own_num -= self.value
         self.scale.config(to = self.own_num)
-        self.num_label.config(text=self.amount_lebel())
+        self.num_label.config(text=self.amount_label())
         fix_amount(self.item, check_amount(self.item) + self.value)
         
         user_db = user_collection.find_one({"student_id" : current_user})
         rent_amount = user_db[self.item]
         user_collection.update_one({"student_id" : current_user}, {"$set" : {self.item : rent_amount - self.value}})
         
-    def amount_lebel(self):
+    def amount_label(self):
         return "수량 "+str(self.own_num)
 
 window = tkinter.Tk()
