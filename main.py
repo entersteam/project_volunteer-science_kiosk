@@ -27,7 +27,7 @@ def fix_amount(item, amount):
     # db에서 주어진 아이템의 개수 수정 / 매개변수는 영문명, 렌트 후 물품의 남은 개수
     items_collection.update_one(
     {"item_name" : item},
-    {"$inc" : {"can_rent" : amount }}
+    {"$set" : {"can_rent" : amount }}
     )
 
 def rent_amount(item, student_id):
@@ -49,6 +49,7 @@ def regist_user():
     global current_user
     current_user = str(inputbarcode.get())
     print("logged in", current_user)
+    start_frame.tkraise()
 
 def no_item(student_id):
     user_db = user_collection.find_one({"student_id" : student_id})
@@ -101,7 +102,7 @@ class rent_frame:
         self.item_num -= self.value
         self.scale.config(to = self.item_num)
         self.label_motor.config(text=self.amount_lebel())
-        fix_amount(item, self.item_num)
+        fix_amount(self.item, self.item_num)
         add_user(current_user)
         user_collection.update_one({'student_id': current_user }, {'$inc' : {self.item : self.value}})
 
@@ -144,6 +145,8 @@ class return_frame:
             self.own_num = rent_amount(self.item, current_user)
         except:
             self.own_num = 0
+        self.scale.congif(t0 = self.won_num)
+        self.num_label.config(to = self.amount_label())
         self.frame.tkraise()
     
     def select(self, x):
