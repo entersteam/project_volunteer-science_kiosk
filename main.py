@@ -62,6 +62,10 @@ def on_entry_change(event):
     content = inputbarcode.get()
     if len(content) == 8:
         regist_user()
+
+def toggle_fullscreen(event=None):
+    state = not window.attributes('-fullscreen')
+    window.attributes('-fullscreen', state)
     
 class rent_frame:
     def __init__(self, item) -> None:
@@ -247,4 +251,15 @@ for i, item in enumerate(item_category):
     return_btn_Frames[i].grid(row = (i//2) + 1, column = (i)%2 + 1, padx=20, pady=20)
 
 login_frame.tkraise() #기본메인화면
+
+# tkinter 윈도우 생성
+
+# 키 바인딩 - F11 키를 누를 때 전체 화면 전환
+window.bind("<F11>", toggle_fullscreen)
+window.bind("<Escape>", lambda event: window.attributes('-fullscreen', False))  # Escape 키를 누를 때 전체 화면 해제
+
+# 초기에는 전체 화면이 아닌 상태로 시작
+window.attributes('-fullscreen', True)
+
+# 윈도우 실행
 window.mainloop()
